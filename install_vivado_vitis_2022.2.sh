@@ -145,7 +145,13 @@ apt-get install -y \
     libwebkit2gtk-4.0-37:amd64 \
     fontconfig:amd64 \
     fonts-dejavu-core \
-    xfonts-base
+    xfonts-base \
+    libgl1-mesa-dri:amd64 \
+    libgl1-mesa-glx:amd64 \
+    libglu1-mesa:amd64 \
+    mesa-utils:amd64 \
+    libcanberra-gtk-module:amd64 \
+    libcanberra-gtk3-module:amd64
 
 echo "  x86-64 libraries installed."
 

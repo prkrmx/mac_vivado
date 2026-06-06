@@ -26,25 +26,25 @@ deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-security main restricted
 EOF
 sudo sed -i 's/^deb http/deb [arch=arm64] http/' /etc/apt/sources.list
 sudo apt update
-sudo apt install -y \ 
-    libc6:amd64 \ 
-    libstdc++6:amd64 \ 
-    libxext6:amd64 \ 
-    libxrender1:amd64 \ 
-    libxtst6:amd64 \ 
-    libxi6:amd64 \ 
-    libxrandr2:amd64 \ 
-    libxfixes3:amd64 \ 
-    libxcursor1:amd64 \ 
-    libxinerama1:amd64 \ 
-    libx11-6:amd64 \ 
-    libxau6:amd64 \ 
-    libxdmcp6:amd64 \ 
-    fontconfig:amd64 \ 
-    fonts-dejavu-core \ 
-    xfonts-base \ 
-    libkrb5-3:amd64 \ 
-    libgssapi-krb5-2:amd64 \ 
+sudo apt install -y \
+    libc6:amd64 \
+    libstdc++6:amd64 \
+    libxext6:amd64 \
+    libxrender1:amd64 \
+    libxtst6:amd64 \
+    libxi6:amd64 \
+    libxrandr2:amd64 \
+    libxfixes3:amd64 \
+    libxcursor1:amd64 \
+    libxinerama1:amd64 \
+    libx11-6:amd64 \
+    libxau6:amd64 \
+    libxdmcp6:amd64 \
+    fontconfig:amd64 \
+    fonts-dejavu-core \
+    xfonts-base \
+    libkrb5-3:amd64 \
+    libgssapi-krb5-2:amd64 \
     libpixman-1-0:amd64
 
 uname -m
@@ -70,13 +70,18 @@ sudo bash -c 'PATH="/usr/local/bin/vivado_shims:$PATH" _JAVA_OPTIONS="-Xmx4g" DI
 sudo /tools/Xilinx/Vitis/2022.2/scripts/installLibs.sh
 
 
-sudo apt install -y \ 
-    libgtk-3-0:amd64 \ 
-    libgdk-pixbuf2.0-0:amd64 \ 
-    libcairo2:amd64 \ 
-    libpango-1.0-0:amd64 \ 
-    libpangocairo-1.0-0:amd64 \ 
-    libatk1.0-0:amd64 \ 
-    libglib2.0-0:amd64 \ 
-    libwebkit2gtk-4.0-37:amd64
+sudo apt install -y \
+    libgtk-3-0:amd64 \
+    libgdk-pixbuf2.0-0:amd64 \
+    libcairo2:amd64 \
+    libpango-1.0-0:amd64 \
+    libpangocairo-1.0-0:amd64 \
+    libatk1.0-0:amd64 \
+    libglib2.0-0:amd64 \
+    libwebkit2gtk-4.0-37:amd64 \
+c
+
+sudo mkdir -p /usr/lib/dri
+sudo ln -sf /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so /usr/lib/dri/swrast_dri.so
+sudo ln -sf /usr/lib/x86_64-linux-gnu/dri/virtio_gpu_dri.so /usr/lib/dri/virtio_gpu_dri.so
 

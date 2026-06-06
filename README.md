@@ -1,5 +1,7 @@
 # Vivado / Vitis 2022.2 on Apple Silicon (M4 Pro)
 
+![Vivado and Vitis launching on ARM Ubuntu](images/vivado.png)
+
 ## Environment
 
 | Component | Version |
@@ -126,6 +128,10 @@ source ~/.bashrc
 vivado
 vitis
 ```
+
+![Vivado 2022.2 — block design on ARM](images/vivado.png)
+
+![Vitis 2022.2 — application project on ARM](images/vitis.png)
 
 ---
 
