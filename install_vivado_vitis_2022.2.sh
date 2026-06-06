@@ -51,7 +51,7 @@ echo "=============================================="
 # 1. Check Rosetta
 # -----------------------------------------------------------------------------
 echo ""
-echo "[1/7] Checking Rosetta..."
+echo "[1/6] Checking Rosetta..."
 if [ ! -f "$ROSETTA" ]; then
     echo "ERROR: Rosetta not found at $ROSETTA"
     echo "  -> Install Parallels Tools first (Actions -> Install Parallels Tools)"
@@ -64,7 +64,7 @@ echo "  OK: $ROSETTA"
 # 2. Register Rosetta as binfmt handler
 # -----------------------------------------------------------------------------
 echo ""
-echo "[2/7] Registering Rosetta as x86_64 binfmt handler..."
+echo "[2/6] Registering Rosetta as x86_64 binfmt handler..."
 if [ -f /proc/sys/fs/binfmt_misc/rosetta ]; then
     echo "  Already registered."
 else
@@ -96,7 +96,7 @@ fi
 # 3. Add amd64 architecture and install x86-64 libraries
 # -----------------------------------------------------------------------------
 echo ""
-echo "[3/7] Installing x86-64 libraries..."
+echo "[3/6] Installing x86-64 libraries..."
 
 # Add amd64 arch
 dpkg --add-architecture amd64
@@ -150,30 +150,12 @@ apt-get install -y \
 echo "  x86-64 libraries installed."
 
 # -----------------------------------------------------------------------------
-# 4. Run Xilinx installLibs.sh (native Ubuntu 22.04 deps)
+# 4. Extract installer
 # -----------------------------------------------------------------------------
 echo ""
-echo "[4/7] Running Xilinx installLibs.sh for native dependencies..."
-if [ -f "$EXTRACT_DIR/installLibs.sh" ]; then
-    bash "$EXTRACT_DIR/installLibs.sh" | tee /tmp/installLibs.log
-    echo "  Done. Log: /tmp/installLibs.log"
-else
-    echo "  Skipped (will run after extraction in step 5)."
-fi
-
-# -----------------------------------------------------------------------------
-# 5. Extract installer
-# -----------------------------------------------------------------------------
-echo ""
-echo "[5/7] Extracting installer to $EXTRACT_DIR ..."
+echo "[4/6] Extracting installer to $EXTRACT_DIR ..."
 rm -rf "$EXTRACT_DIR"
 sh "$INSTALLER_BIN" --noexec --target "$EXTRACT_DIR"
-
-# Now run installLibs.sh if it was skipped above
-if [ -f "$EXTRACT_DIR/installLibs.sh" ]; then
-    echo "  Running Xilinx installLibs.sh..."
-    bash "$EXTRACT_DIR/installLibs.sh" | tee /tmp/installLibs.log
-fi
 
 # Verify x86 Java works
 echo "  Testing x86-64 Java via Rosetta..."
@@ -182,10 +164,10 @@ $JAVA -version 2>&1 | head -1
 echo "  Java OK."
 
 # -----------------------------------------------------------------------------
-# 6. Setup fake uname shim (for installer architecture check)
+# 5. Setup fake uname shim (for installer architecture check)
 # -----------------------------------------------------------------------------
 echo ""
-echo "[6/7] Setting up uname shim..."
+echo "[5/6] Setting up uname shim..."
 mkdir -p "$UNAME_SHIM_DIR"
 cat > "$UNAME_SHIM_DIR/uname" << 'EOF'
 #!/bin/bash
@@ -200,10 +182,10 @@ export PATH="$UNAME_SHIM_DIR:$PATH"
 echo "  uname -m -> $(uname -m)"
 
 # -----------------------------------------------------------------------------
-# 7. Launch installer
+# 6. Launch installer
 # -----------------------------------------------------------------------------
 echo ""
-echo "[7/7] Launching Vivado/Vitis installer..."
+echo "[6/6] Launching Vivado/Vitis installer..."
 echo ""
 echo "  Recommended install path: $INSTALL_DIR"
 echo "  Select: Vitis Unified Software Platform"
@@ -215,8 +197,15 @@ mkdir -p "$INSTALL_DIR"
 export _JAVA_OPTIONS="-Xmx4g"
 "$EXTRACT_DIR/xsetup"
 
-# Cleanup shim after install
+# Cleanup shim and extracted installer
 rm -rf "$UNAME_SHIM_DIR"
+rm -rf "$EXTRACT_DIR"
+
+# Run post-install dependency fixer from the installed Vitis tree
+if [ -f "$INSTALL_DIR/Vitis/2022.2/scripts/installLibs.sh" ]; then
+    echo "  Running post-install Vitis installLibs.sh..."
+    bash "$INSTALL_DIR/Vitis/2022.2/scripts/installLibs.sh"
+fi
 
 # -----------------------------------------------------------------------------
 # Post-install instructions
@@ -225,11 +214,9 @@ echo ""
 echo "=============================================="
 echo " Installation complete!"
 echo ""
-echo " Add to ~/.bashrc:"
+echo " To launch:"
 echo "   source /tools/Xilinx/Vivado/2022.2/settings64.sh"
 echo "   source /tools/Xilinx/Vitis/2022.2/settings64.sh"
-echo ""
-echo " To launch:"
 echo "   vivado"
 echo "   vitis"
 echo "=============================================="

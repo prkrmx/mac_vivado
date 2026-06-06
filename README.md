@@ -1,4 +1,4 @@
-# Vivado / Vitis 2022.2 on Apple Silicon (ARM) — Complete Setup Guide
+# Vivado / Vitis 2022.2 on Apple Silicon (M4 Pro)
 
 ## Environment
 
@@ -47,10 +47,12 @@ Parallels Tools enables the Rosetta Linux share (`/media/psf/RosettaLinux/`).
 2. Inside the VM:
 
 ```bash
-sudo mount /dev/cdrom /mnt
-sudo /mnt/install
+cd "/media/$USER/Parallels Tools"
+sudo ./install
 sudo reboot
 ```
+
+> Parallels Tools mounts as a folder under `/media/$USER/Parallels Tools/`. On older Parallels versions it may appear as a CD drive at `/dev/cdrom` — if the folder path is missing, use `sudo mount /dev/cdrom /mnt && sudo /mnt/install` instead.
 
 3. After reboot, verify:
 
@@ -69,7 +71,11 @@ ls /media/psf/RosettaLinux/
 
 ---
 
-## Step 4 — Run the Install Script
+## Step 4 — Install Vivado / Vitis
+
+Two options — pick one:
+
+### Option A — Run the install script (automated)
 
 ```bash
 chmod +x install_vivado_vitis_2022.2.sh
@@ -80,12 +86,17 @@ The script will:
 1. Verify Rosetta is available
 2. Register Rosetta as binfmt handler (persistent across reboots)
 3. Add amd64 architecture and install all required x86-64 libraries
-4. Run Xilinx's own `installLibs.sh` for native dependencies
-5. Extract the installer
-6. Set up a temporary uname shim to bypass the architecture check
-7. Launch the GUI installer with 4GB heap
+4. Extract the installer
+5. Set up a temporary uname shim to bypass the architecture check
+6. Launch the GUI installer with 4GB heap; run post-install `Vitis/2022.2/scripts/installLibs.sh` on exit
 
-In the GUI installer select:
+### Option B — Manual install
+
+Run all commands from the [Session Log](#session-log) section at the bottom of this document in order.
+
+---
+
+In the GUI installer (either option) select:
 - **Product:** Vitis Unified Software Platform
 - **Devices:** Zynq-7000 (add others as needed)
 - **Install path:** `/tools/Xilinx`
@@ -189,3 +200,98 @@ All libraries installed with `:amd64` suffix via multiarch:
 | `libxrender1:amd64` | X Render extension |
 | `libxtst6:amd64` | X Test extension |
 | `fontconfig:amd64` | Font configuration |
+
+---
+
+## Session Log
+
+Actual commands run during the initial manual setup. Used as the basis for `install_vivado_vitis_2022.2.sh`.
+
+```bash
+# --- Initial Ubuntu setup ---
+sudo apt update
+sudo apt upgrade
+sudo init 6
+
+sudo apt install ubuntu-desktop-minimal
+sudo init 6
+
+# --- Install Parallels Tools ---
+cd /media/max/Parallels\ Tools/
+sudo ./install
+sudo init 6
+
+# --- Verify Rosetta ---
+ls /media/psf/RosettaLinux/
+ls /proc/sys/fs/binfmt_misc/
+cat /proc/sys/fs/binfmt_misc/rosetta
+echo ':rosetta:M::\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x3e\x00:\xff\xff\xff\xff\xff\xfe\xfe\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/media/psf/RosettaLinux/rosetta:CF' | sudo tee /proc/sys/fs/binfmt_misc/register
+cat /proc/sys/fs/binfmt_misc/rosetta
+
+# --- Add amd64 arch and install x86-64 libs ---
+sudo dpkg --add-architecture amd64
+sudo apt update
+sudo tee /etc/apt/sources.list.d/amd64.list << 'EOF'
+deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy main restricted universe multiverse
+deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-updates main restricted universe multiverse
+deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-security main restricted universe multiverse
+EOF
+sudo sed -i 's/^deb http/deb [arch=arm64] http/' /etc/apt/sources.list
+sudo apt update
+sudo apt install -y \
+    libc6:amd64 \
+    libstdc++6:amd64 \
+    libxext6:amd64 \
+    libxrender1:amd64 \
+    libxtst6:amd64 \
+    libxi6:amd64 \
+    libxrandr2:amd64 \
+    libxfixes3:amd64 \
+    libxcursor1:amd64 \
+    libxinerama1:amd64 \
+    libx11-6:amd64 \
+    libxau6:amd64 \
+    libxdmcp6:amd64 \
+    fontconfig:amd64 \
+    fonts-dejavu-core \
+    xfonts-base \
+    libkrb5-3:amd64 \
+    libgssapi-krb5-2:amd64 \
+    libpixman-1-0:amd64
+
+# --- uname shim ---
+uname -m
+sudo mkdir -p /usr/local/bin/vivado_shims
+sudo tee /usr/local/bin/vivado_shims/uname << 'EOF'
+#!/bin/bash
+if [ "$1" = "-m" ]; then
+    echo "x86_64"
+else
+    /bin/uname "$@"
+fi
+EOF
+sudo chmod +x /usr/local/bin/vivado_shims/uname
+export PATH="/usr/local/bin/vivado_shims:$PATH"
+uname -m
+
+# --- Extract and launch installer ---
+ls -l
+sh Xilinx_Unified_2022.2_1014_8888_Lin64.bin --noexec --target /tmp/vivado_extract
+/tmp/vivado_extract/tps/lnx64/jre11.0.11_9/bin/java -version
+
+sudo bash -c 'PATH="/usr/local/bin/vivado_shims:$PATH" _JAVA_OPTIONS="-Xmx4g" DISPLAY=:0 /tmp/vivado_extract/xsetup'
+
+# --- Post-install: fix Vitis Eclipse dependencies ---
+sudo /tools/Xilinx/Vitis/2022.2/scripts/installLibs.sh
+
+# GTK/WebKit libs were needed after first Vitis launch attempt:
+sudo apt install -y \
+    libgtk-3-0:amd64 \
+    libgdk-pixbuf2.0-0:amd64 \
+    libcairo2:amd64 \
+    libpango-1.0-0:amd64 \
+    libpangocairo-1.0-0:amd64 \
+    libatk1.0-0:amd64 \
+    libglib2.0-0:amd64 \
+    libwebkit2gtk-4.0-37:amd64
+```
