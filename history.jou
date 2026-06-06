@@ -1,0 +1,82 @@
+sudo apt update
+sudo apt upgrade 
+sudo init 6
+
+sudo apt install ubuntu-desktop-minimal
+sudo init 6
+
+cd /media/max/Parallels\ Tools/
+sudo ./install
+sudo init 6
+
+
+ls /media/psf/RosettaLinux/
+ls /proc/sys/fs/binfmt_misc/
+cat /proc/sys/fs/binfmt_misc/rosetta
+echo ':rosetta:M::\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x3e\x00:\xff\xff\xff\xff\xff\xfe\xfe\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/media/psf/RosettaLinux/rosetta:CF' | sudo tee /proc/sys/fs/binfmt_misc/register
+cat /proc/sys/fs/binfmt_misc/rosetta
+
+
+sudo dpkg --add-architecture amd64
+sudo apt update
+sudo tee /etc/apt/sources.list.d/amd64.list << 'EOF'
+deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy main restricted universe multiverse
+deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-updates main restricted universe multiverse
+deb [arch=amd64] http://archive.ubuntu.com/ubuntu jammy-security main restricted universe multiverse
+EOF
+sudo sed -i 's/^deb http/deb [arch=arm64] http/' /etc/apt/sources.list
+sudo apt update
+sudo apt install -y \ 
+    libc6:amd64 \ 
+    libstdc++6:amd64 \ 
+    libxext6:amd64 \ 
+    libxrender1:amd64 \ 
+    libxtst6:amd64 \ 
+    libxi6:amd64 \ 
+    libxrandr2:amd64 \ 
+    libxfixes3:amd64 \ 
+    libxcursor1:amd64 \ 
+    libxinerama1:amd64 \ 
+    libx11-6:amd64 \ 
+    libxau6:amd64 \ 
+    libxdmcp6:amd64 \ 
+    fontconfig:amd64 \ 
+    fonts-dejavu-core \ 
+    xfonts-base \ 
+    libkrb5-3:amd64 \ 
+    libgssapi-krb5-2:amd64 \ 
+    libpixman-1-0:amd64
+
+uname -m
+sudo mkdir -p /usr/local/bin/vivado_shims
+sudo tee /usr/local/bin/vivado_shims/uname << 'EOF'
+#!/bin/bash
+if [ "$1" = "-m" ]; then
+    echo "x86_64"
+else
+    /bin/uname "$@"
+fi
+EOF
+sudo chmod +x /usr/local/bin/vivado_shims/uname
+export PATH="/usr/local/bin/vivado_shims:$PATH"
+uname -m
+
+ls -l
+sh Xilinx_Unified_2022.2_1014_8888_Lin64.bin --noexec --target /tmp/vivado_extract
+/tmp/vivado_extract/tps/lnx64/jre11.0.11_9/bin/java -version
+
+
+sudo bash -c 'PATH="/usr/local/bin/vivado_shims:$PATH" _JAVA_OPTIONS="-Xmx4g" DISPLAY=:0 /tmp/vivado_extract/xsetup'
+sudo /tools/Xilinx/Vitis/2022.2/scripts/installLibs.sh
+
+
+sudo apt install -y \ 
+    libgtk-3-0:amd64 \ 
+    libgdk-pixbuf2.0-0:amd64 \ 
+    libcairo2:amd64 \ 
+    libpango-1.0-0:amd64 \ 
+    libpangocairo-1.0-0:amd64 \ 
+    libatk1.0-0:amd64 \ 
+    libglib2.0-0:amd64 \ 
+    libwebkit2gtk-4.0-37:amd64
+
